@@ -7,7 +7,7 @@ export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [tournaments, setTournaments] = useState([]);
-  const [form, setForm] = useState({ name: "", sport: "" });
+  const [form, setForm] = useState({ name: "", sport: "", format: "round-robin" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -22,7 +22,7 @@ export default function HomePage() {
     setLoading(true);
     setError("");
     try {
-      const { data } = await createTournament({ ...form, format: "round-robin" });
+      const { data } = await createTournament(form);
       navigate(`/tournaments/${data.id}`);
     } catch (err) {
       setError(err.response?.data?.detail || "Failed to create tournament");
@@ -96,6 +96,25 @@ export default function HomePage() {
                 <input className="field" placeholder="e.g. Football, Basketball, Volleyball" value={form.sport}
                   onChange={(e) => setForm({ ...form, sport: e.target.value })} required />
               </div>
+              <div>
+                <label className="label">Format</label>
+                <div style={s.formatToggle}>
+                  {[
+                    { value: "round-robin", label: "League", sub: "Everyone plays everyone" },
+                    { value: "single-elimination", label: "Bracket", sub: "Win or go home" },
+                  ].map((f) => (
+                    <button
+                      key={f.value}
+                      type="button"
+                      style={{ ...s.formatOption, ...(form.format === f.value ? s.formatActive : {}) }}
+                      onClick={() => setForm({ ...form, format: f.value })}
+                    >
+                      <span style={s.formatLabel}>{f.label}</span>
+                      <span style={s.formatSub}>{f.sub}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               {error && <p className="err">{error}</p>}
               <button type="submit" className="btn-primary" style={{ width: "100%", marginTop: 4 }} disabled={loading}>
                 {loading ? "Creating…" : "Create & Setup Teams →"}
@@ -160,7 +179,7 @@ function TournamentCard({ tournament: t }) {
     >
       <div style={s.tCardTop}>
         <span style={s.sportTag}>{t.sport}</span>
-        <span style={s.formatTag}>Round Robin</span>
+        <span style={s.formatTag}>{t.format === "single-elimination" ? "Bracket" : "League"}</span>
       </div>
       <div style={s.tName}>{t.name}</div>
       <div style={s.tMeta}>
@@ -289,6 +308,27 @@ const s = {
     position: "relative",
   },
   tCardTop: { display: "flex", gap: 6 },
+  formatToggle: {
+    display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
+  },
+  formatOption: {
+    background: "var(--bg-raised)", border: "1px solid var(--border)",
+    borderRadius: 8, padding: "10px 12px",
+    display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2,
+    cursor: "pointer", transition: "border-color 180ms",
+    textAlign: "left",
+  },
+  formatActive: {
+    borderColor: "#E5152E", background: "rgba(229,21,46,0.08)",
+  },
+  formatLabel: {
+    fontFamily: "'Barlow Condensed',sans-serif",
+    fontSize: 14, fontWeight: 700, textTransform: "uppercase",
+    letterSpacing: "0.06em", color: "#F0EEF5",
+  },
+  formatSub: {
+    fontSize: 11, color: "var(--text-dim)",
+  },
   sportTag: {
     fontFamily: "'Barlow Condensed',sans-serif",
     fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",

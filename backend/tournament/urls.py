@@ -10,5 +10,6 @@ urlpatterns = [
     path("tournaments/<int:tournament_id>/generate-schedule/", views.generate_schedule, name="generate-schedule"),
     path("tournaments/<int:tournament_id>/standings/", views.standings, name="standings"),
     path("tournaments/<int:tournament_id>/schedule/", views.schedule, name="schedule"),
+    path("tournaments/<int:tournament_id>/bracket/", views.bracket, name="bracket"),
     path("matches/<int:match_id>/result/", views.enter_result, name="enter-result"),
 ]

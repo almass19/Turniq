@@ -3,9 +3,14 @@ from django.contrib.auth.models import User
 
 
 class Tournament(models.Model):
+    FORMAT_CHOICES = [
+        ("round-robin", "Round Robin"),
+        ("single-elimination", "Single Elimination"),
+    ]
+
     name = models.CharField(max_length=200)
     sport = models.CharField(max_length=100)
-    format = models.CharField(max_length=50, default="round-robin")
+    format = models.CharField(max_length=50, choices=FORMAT_CHOICES, default="round-robin")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tournaments")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -35,21 +40,25 @@ class Player(models.Model):
 
 class Match(models.Model):
     STATUS_CHOICES = [
+        ("tbd", "TBD"),
         ("scheduled", "Scheduled"),
         ("completed", "Completed"),
     ]
 
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name="matches")
-    home_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="home_matches")
-    away_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="away_matches")
+    home_team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name="home_matches")
+    away_team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name="away_matches")
     home_score = models.PositiveIntegerField(null=True, blank=True)
     away_score = models.PositiveIntegerField(null=True, blank=True)
     date = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="scheduled")
     round_number = models.PositiveIntegerField(default=1)
+    bracket_position = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.home_team} vs {self.away_team}"
+        home = self.home_team.name if self.home_team else "TBD"
+        away = self.away_team.name if self.away_team else "TBD"
+        return f"{home} vs {away}"
 
 
 class Standing(models.Model):

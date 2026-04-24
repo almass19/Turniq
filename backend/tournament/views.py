@@ -1,3 +1,4 @@
+import math
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -9,8 +10,10 @@ from .serializers import (
     TournamentSerializer, TeamSerializer, MatchSerializer,
     StandingSerializer, UserSerializer,
 )
-from .permissions import IsOrganizerOrReadOnly
-from .utils import generate_round_robin, recalculate_standings
+from .utils import (
+    generate_round_robin, generate_single_elimination,
+    advance_elimination_winner, recalculate_standings, get_round_name,
+)
 
 
 @api_view(["POST"])
@@ -33,9 +36,7 @@ class TournamentListCreateView(generics.ListCreateAPIView):
         return [IsAuthenticated()]
 
     def perform_create(self, serializer):
-        tournament = serializer.save(created_by=self.request.user)
-        # Generate schedule if teams were added via bulk creation — handled separately.
-        # Schedule is generated when teams are finalized via /generate-schedule/.
+        serializer.save(created_by=self.request.user)
 
 
 class TournamentDetailView(generics.RetrieveAPIView):
@@ -69,10 +70,15 @@ def generate_schedule(request, tournament_id):
     if tournament.matches.exists():
         return Response({"detail": "Schedule already generated."}, status=status.HTTP_400_BAD_REQUEST)
 
-    if tournament.teams.count() < 2:
+    team_count = tournament.teams.count()
+    if team_count < 2:
         return Response({"detail": "Need at least 2 teams."}, status=status.HTTP_400_BAD_REQUEST)
 
-    generate_round_robin(tournament)
+    if tournament.format == "single-elimination":
+        generate_single_elimination(tournament)
+    else:
+        generate_round_robin(tournament)
+
     return Response({"detail": "Schedule generated."}, status=status.HTTP_201_CREATED)
 
 
@@ -83,6 +89,9 @@ def enter_result(request, match_id):
     tournament = match.tournament
     if tournament.created_by != request.user:
         return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
+
+    if not match.home_team or not match.away_team:
+        return Response({"detail": "Match is not ready yet."}, status=status.HTTP_400_BAD_REQUEST)
 
     home_score = request.data.get("home_score")
     away_score = request.data.get("away_score")
@@ -96,9 +105,17 @@ def enter_result(request, match_id):
     except (ValueError, TypeError):
         return Response({"detail": "Scores must be integers."}, status=status.HTTP_400_BAD_REQUEST)
 
+    if tournament.format == "single-elimination" and match.home_score == match.away_score:
+        return Response({"detail": "Draws not allowed in elimination format."}, status=status.HTTP_400_BAD_REQUEST)
+
     match.status = "completed"
     match.save()
-    recalculate_standings(tournament)
+
+    if tournament.format == "single-elimination":
+        advance_elimination_winner(match)
+    else:
+        recalculate_standings(tournament)
+
     return Response(MatchSerializer(match).data)
 
 
@@ -111,8 +128,7 @@ def standings(request, tournament_id):
         standing_list,
         key=lambda s: (-s.points, -s.goal_diff, -s.goals_for),
     )
-    serializer = StandingSerializer(sorted_standings, many=True)
-    return Response(serializer.data)
+    return Response(StandingSerializer(sorted_standings, many=True).data)
 
 
 @api_view(["GET"])
@@ -121,9 +137,32 @@ def schedule(request, tournament_id):
     tournament = get_object_or_404(Tournament, pk=tournament_id)
     matches = Match.objects.filter(tournament=tournament).select_related(
         "home_team", "away_team"
-    ).order_by("round_number", "date")
-    serializer = MatchSerializer(matches, many=True)
-    return Response(serializer.data)
+    ).order_by("round_number", "bracket_position", "date")
+    return Response(MatchSerializer(matches, many=True).data)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def bracket(request, tournament_id):
+    tournament = get_object_or_404(Tournament, pk=tournament_id)
+    matches = Match.objects.filter(tournament=tournament).select_related(
+        "home_team", "away_team"
+    ).order_by("round_number", "bracket_position")
+
+    total_rounds = matches.aggregate(
+        max_round=__import__("django.db.models", fromlist=["Max"]).Max("round_number")
+    )["max_round"] or 1
+
+    rounds = []
+    for r in range(1, total_rounds + 1):
+        round_matches = [m for m in matches if m.round_number == r]
+        rounds.append({
+            "round": r,
+            "name": get_round_name(r, total_rounds),
+            "matches": MatchSerializer(round_matches, many=True).data,
+        })
+
+    return Response(rounds)
 
 
 @api_view(["GET"])
@@ -131,5 +170,4 @@ def schedule(request, tournament_id):
 def teams_list(request, tournament_id):
     tournament = get_object_or_404(Tournament, pk=tournament_id)
     teams = Team.objects.filter(tournament=tournament).prefetch_related("players")
-    serializer = TeamSerializer(teams, many=True)
-    return Response(serializer.data)
+    return Response(TeamSerializer(teams, many=True).data)

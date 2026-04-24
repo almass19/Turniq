@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getTournament, getSchedule, getStandings, getTeams,
-  addTeam, generateSchedule, enterResult,
+  addTeam, generateSchedule, enterResult, getBracket,
 } from "../api/tournaments";
 import { useAuth } from "../context/AuthContext";
 
@@ -20,6 +20,7 @@ export default function TournamentPage() {
   const [teamError, setTeamError] = useState("");
   const [resultModal, setResultModal] = useState(null);
   const [scores, setScores] = useState({ home: "", away: "" });
+  const [bracket, setBracket] = useState([]);
   const [scheduleGenerated, setScheduleGenerated] = useState(false);
   const [genLoading, setGenLoading] = useState(false);
 
@@ -32,6 +33,9 @@ export default function TournamentPage() {
     setStandings(st.data);
     setTeams(tm.data);
     setScheduleGenerated(sc.data.length > 0);
+    if (t.data.format === "single-elimination") {
+      try { const br = await getBracket(id); setBracket(br.data); } catch {}
+    }
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
@@ -99,7 +103,7 @@ export default function TournamentPage() {
 
           <div style={s.headerMeta}>
             <span style={s.sportChip}>{tournament.sport}</span>
-            <span style={s.formatChip}>Round Robin</span>
+            <span style={s.formatChip}>{tournament.format === "single-elimination" ? "Bracket" : "League"}</span>
           </div>
           <h1 style={s.title}>{tournament.name}</h1>
 
@@ -151,7 +155,9 @@ export default function TournamentPage() {
             ) : (
               <div style={s.orgNote}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#F0A500" strokeWidth="2" strokeLinecap="round" /></svg>
-                Schedule is live — enter results in the Schedule tab
+                {tournament.format === "single-elimination"
+                  ? "Bracket is live — enter results to advance teams"
+                  : "Schedule is live — enter results in the Schedule tab"}
               </div>
             )}
           </div>
@@ -161,11 +167,18 @@ export default function TournamentPage() {
       {/* ── Tabs ── */}
       <div style={s.tabsWrap}>
         <div style={s.tabsInner}>
-          {[
-            { key: "schedule", label: "Schedule", count: schedule.length },
-            { key: "standings", label: "Standings", count: standings.length },
-            { key: "teams", label: "Teams", count: teams.length },
-          ].map(({ key, label, count }) => (
+          {(tournament.format === "single-elimination"
+            ? [
+                { key: "schedule", label: "Schedule", count: schedule.length },
+                { key: "bracket", label: "Bracket", count: bracket.length },
+                { key: "teams", label: "Teams", count: teams.length },
+              ]
+            : [
+                { key: "schedule", label: "Schedule", count: schedule.length },
+                { key: "standings", label: "Standings", count: standings.length },
+                { key: "teams", label: "Teams", count: teams.length },
+              ]
+          ).map(({ key, label, count }) => (
             <button
               key={key}
               style={{ ...s.tabBtn, ...(tab === key ? s.tabActive : {}) }}
@@ -187,6 +200,8 @@ export default function TournamentPage() {
             onEnterResult={(m) => { setResultModal(m); setScores({ home: "", away: "" }); }} />
         )}
         {tab === "standings" && <StandingsTab standings={standings} />}
+        {tab === "bracket" && <BracketTab bracket={bracket} isOrganizer={isOrganizer}
+            onEnterResult={(m) => { setResultModal(m); setScores({ home: "", away: "" }); }} />}
         {tab === "teams" && <TeamsTab teams={teams} />}
       </div>
 
@@ -309,6 +324,113 @@ function MatchRow({ match: m, isOrganizer, onEnterResult }) {
     </div>
   );
 }
+
+/* ── Bracket Tab ──────────────────────────── */
+function BracketTab({ bracket, isOrganizer, onEnterResult }) {
+  if (bracket.length === 0) return (
+    <div style={s.empty}>
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.2 }}>
+        <path d="M3 6h4v4H3zM3 14h4v4H3zM17 10h4v4h-4zM7 8h6M7 16h6M13 8v8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <p style={s.emptyText}>No bracket yet — add teams and generate</p>
+    </div>
+  );
+
+  return (
+    <div style={bs.wrap}>
+      {bracket.map((round, ri) => (
+        <div key={round.round} style={bs.roundCol}>
+          <div style={bs.roundName}>{round.name}</div>
+          <div style={bs.matchList}>
+            {round.matches.map((m) => {
+              const done = m.status === "completed";
+              const homeWin = done && m.home_score > m.away_score;
+              const awayWin = done && m.away_score > m.home_score;
+              const isTBD = !m.home_team && !m.away_team;
+              return (
+                <div key={m.id} style={bs.card}>
+                  <div style={{ ...bs.team, ...(homeWin ? bs.winner : {}), ...(isTBD ? bs.tbd : {}) }}>
+                    <span style={bs.teamName}>{m.home_team_name}</span>
+                    {done && <span style={{ ...bs.score, ...(homeWin ? bs.scoreWin : {}) }}>{m.home_score}</span>}
+                  </div>
+                  <div style={bs.divider} />
+                  <div style={{ ...bs.team, ...(awayWin ? bs.winner : {}), ...(isTBD ? bs.tbd : {}) }}>
+                    <span style={bs.teamName}>{m.away_team_name}</span>
+                    {done && <span style={{ ...bs.score, ...(awayWin ? bs.scoreWin : {}) }}>{m.away_score}</span>}
+                  </div>
+                  {isOrganizer && !done && !isTBD && m.home_team && m.away_team && (
+                    <button style={bs.resultBtn} onClick={() => onEnterResult(m)}>
+                      Result
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const bs = {
+  wrap: {
+    display: "flex", gap: 0, overflowX: "auto",
+    paddingBottom: 16, alignItems: "flex-start",
+  },
+  roundCol: {
+    display: "flex", flexDirection: "column",
+    minWidth: 200, flex: "0 0 200px",
+  },
+  roundName: {
+    fontFamily: "'Barlow Condensed',sans-serif",
+    fontSize: 11, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase",
+    color: "#E5152E", textAlign: "center",
+    padding: "0 8px 14px", borderBottom: "1px solid var(--border)",
+    marginBottom: 0,
+  },
+  matchList: {
+    display: "flex", flexDirection: "column",
+    justifyContent: "space-around",
+    flex: 1, padding: "16px 8px",
+    gap: 12,
+  },
+  card: {
+    background: "var(--bg-card)", border: "1px solid var(--border)",
+    borderRadius: 10, overflow: "hidden",
+    position: "relative",
+  },
+  team: {
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    padding: "10px 14px",
+  },
+  winner: { background: "rgba(229,21,46,0.06)" },
+  tbd: { opacity: 0.4 },
+  teamName: {
+    fontFamily: "'Barlow Condensed',sans-serif",
+    fontSize: 15, fontWeight: 700, letterSpacing: "0.03em", textTransform: "uppercase",
+    color: "#F0EEF5", flex: 1,
+    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+  },
+  score: {
+    fontFamily: "'Barlow Condensed',sans-serif",
+    fontSize: 18, fontWeight: 900,
+    color: "var(--text-dim)",
+    marginLeft: 8, minWidth: 20, textAlign: "right",
+  },
+  scoreWin: { color: "#E5152E" },
+  divider: { height: 1, background: "var(--border)", margin: "0" },
+  resultBtn: {
+    width: "100%",
+    background: "rgba(229,21,46,0.08)", border: "none",
+    borderTop: "1px solid rgba(229,21,46,0.15)",
+    padding: "7px 14px",
+    fontFamily: "'Barlow Condensed',sans-serif",
+    fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
+    color: "#E5152E", cursor: "pointer",
+    transition: "background 180ms",
+  },
+};
 
 /* ── Standings Tab ────────────────────────── */
 function StandingsTab({ standings }) {

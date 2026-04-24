@@ -11,6 +11,8 @@ export const generateSchedule = (tournamentId) =>
   api.post(`/tournaments/${tournamentId}/generate-schedule/`);
 export const getSchedule = (tournamentId) =>
   api.get(`/tournaments/${tournamentId}/schedule/`);
+export const getBracket = (tournamentId) =>
+  api.get(`/tournaments/${tournamentId}/bracket/`);
 export const getStandings = (tournamentId) =>
   api.get(`/tournaments/${tournamentId}/standings/`);
 export const enterResult = (matchId, data) =>

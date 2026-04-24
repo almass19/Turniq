@@ -29,8 +29,8 @@ class TeamSerializer(serializers.ModelSerializer):
 
 
 class MatchSerializer(serializers.ModelSerializer):
-    home_team_name = serializers.CharField(source="home_team.name", read_only=True)
-    away_team_name = serializers.CharField(source="away_team.name", read_only=True)
+    home_team_name = serializers.SerializerMethodField()
+    away_team_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Match
@@ -38,8 +38,14 @@ class MatchSerializer(serializers.ModelSerializer):
             "id", "home_team", "home_team_name",
             "away_team", "away_team_name",
             "home_score", "away_score",
-            "date", "status", "round_number",
+            "date", "status", "round_number", "bracket_position",
         )
+
+    def get_home_team_name(self, obj):
+        return obj.home_team.name if obj.home_team else "TBD"
+
+    def get_away_team_name(self, obj):
+        return obj.away_team.name if obj.away_team else "TBD"
 
 
 class StandingSerializer(serializers.ModelSerializer):
