@@ -2,6 +2,7 @@ app = "turniq-backend"
 primary_region = "ams"
 
 [build]
+  dockerfile = "Dockerfile"
 
 [deploy]
   release_command = "python manage.py migrate --noinput"
