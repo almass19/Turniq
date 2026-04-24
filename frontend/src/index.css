@@ -1,0 +1,168 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0B0B0F;
+  --bg-card:   #131318;
+  --bg-raised: #1A1A22;
+  --bg-hover:  #1E1E28;
+  --border:    rgba(255,255,255,0.07);
+  --border-hi: rgba(255,255,255,0.14);
+
+  --red:       #E5152E;
+  --red-dim:   rgba(229,21,46,0.12);
+  --red-glow:  0 0 24px rgba(229,21,46,0.35);
+  --gold:      #F0A500;
+  --gold-dim:  rgba(240,165,0,0.12);
+
+  --text:      #F0EEF5;
+  --text-muted:#8B8A9B;
+  --text-dim:  #4E4D5E;
+
+  --heading:   'Barlow Condensed', sans-serif;
+  --body:      'Barlow', sans-serif;
+
+  --radius-sm: 6px;
+  --radius:    10px;
+  --radius-lg: 16px;
+
+  --transition: 180ms ease;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--body);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+#root { min-height: 100vh; display: flex; flex-direction: column; }
+
+h1,h2,h3,h4,h5 {
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.05;
+}
+
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; font-family: var(--body); }
+input, select, textarea { font-family: var(--body); }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--bg-raised); border-radius: 99px; }
+
+::selection { background: var(--red-dim); color: var(--text); }
+
+/* ── Shared inputs ─────────────────────────────── */
+.field {
+  width: 100%;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 15px;
+  padding: 11px 14px;
+  transition: border-color var(--transition);
+  outline: none;
+}
+.field::placeholder { color: var(--text-dim); }
+.field:focus { border-color: var(--border-hi); }
+
+/* ── Shared buttons ────────────────────────────── */
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--heading);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 11px 22px;
+  transition: filter var(--transition), box-shadow var(--transition);
+}
+.btn-primary:hover { filter: brightness(1.15); box-shadow: var(--red-glow); }
+.btn-primary:disabled { opacity: 0.45; pointer-events: none; }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--heading);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 9px 18px;
+  transition: border-color var(--transition), color var(--transition);
+}
+.btn-ghost:hover { border-color: var(--border-hi); color: var(--text); }
+
+.btn-gold {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--gold);
+  color: #0B0B0F;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--heading);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  transition: filter var(--transition);
+}
+.btn-gold:hover { filter: brightness(1.1); }
+
+/* ── Cards ─────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Error text ────────────────────────────────── */
+.err { color: var(--red); font-size: 13px; }
+
+/* ── Label ─────────────────────────────────────── */
+.label {
+  font-family: var(--heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* ── Keyframes ─────────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* animate page sections */
+main > * {
+  animation: fadeIn 260ms ease both;
+}
