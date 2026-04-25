@@ -33,13 +33,13 @@ export default function Navbar() {
         </nav>
 
         <div style={s.right}>
-          <button style={s.langBtn} onClick={toggleLang}>
+          <button className="nav-lang-btn" style={s.langBtn} onClick={toggleLang}>
             {i18n.language === "ru" ? "EN" : "RU"}
           </button>
 
           {user ? (
             <>
-              <span style={s.username}>
+              <span className="nav-username" style={s.username}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.5 }}>
                   <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
                   <path d="M4 20C4 17 7.6 14 12 14C16.4 14 20 17 20 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />

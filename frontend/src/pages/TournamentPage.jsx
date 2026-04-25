@@ -132,10 +132,10 @@ export default function TournamentPage() {
       {/* ── Organizer panel ── */}
       {isOrganizer && (
         <div style={s.orgPanel}>
-          <div style={s.orgInner}>
+          <div className="org-inner" style={s.orgInner}>
             {!scheduleGenerated ? (
               <>
-                <form onSubmit={handleAddTeam} style={s.addForm}>
+                <form onSubmit={handleAddTeam} className="add-form" style={s.addForm}>
                   <div style={{ flex: 1 }}>
                     <label className="label">{t("tournament.addTeam")}</label>
                     <input className="field" placeholder={t("tournament.teamPlaceholder")} value={newTeam}
@@ -301,7 +301,7 @@ function MatchRow({ match: m, isOrganizer, onEnterResult }) {
   const awayWin = done && m.away_score > m.home_score;
 
   return (
-    <div style={{ ...s.matchRow, ...(done ? s.matchRowDone : {}) }}>
+    <div className="match-row" style={{ ...s.matchRow, ...(done ? s.matchRowDone : {}) }}>
       <div style={s.matchTeam}>
         <span style={{ ...s.matchTeamName, ...(homeWin ? s.matchWinner : {}) }}>{m.home_team_name}</span>
       </div>
@@ -320,7 +320,7 @@ function MatchRow({ match: m, isOrganizer, onEnterResult }) {
         <span style={{ ...s.matchTeamName, ...(awayWin ? s.matchWinner : {}) }}>{m.away_team_name}</span>
       </div>
       {isOrganizer && !done && (
-        <button style={s.resultBtn} onClick={() => onEnterResult(m)}>
+        <button className="match-row-btn" style={s.resultBtn} onClick={() => onEnterResult(m)}>
           <EnterResultLabel />
         </button>
       )}
@@ -346,9 +346,9 @@ function BracketTab({ bracket, isOrganizer, onEnterResult }) {
   );
 
   return (
-    <div style={bs.wrap}>
+    <div className="bracket-wrap" style={bs.wrap}>
       {bracket.map((round, ri) => (
-        <div key={round.round} style={bs.roundCol}>
+        <div key={round.round} className="bracket-round-col" style={bs.roundCol}>
           <div style={bs.roundName}>{t(`tournament.rounds.${round.name}`, round.name)}</div>
           <div style={bs.matchList}>
             {round.matches.map((m) => {

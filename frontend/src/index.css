@@ -166,3 +166,38 @@ input, select, textarea { font-family: var(--body); }
 main > * {
   animation: fadeIn 260ms ease both;
 }
+
+/* ── Mobile ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Navbar: hide username, shrink buttons */
+  .nav-username { display: none !important; }
+  .nav-lang-btn { padding: 3px 8px !important; font-size: 11px !important; }
+
+  /* Match row: wrap enter-result button below on mobile */
+  .match-row {
+    grid-template-columns: 1fr auto 1fr !important;
+  }
+  .match-row-btn {
+    grid-column: 1 / -1;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Organizer panel: stack vertically */
+  .org-inner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .add-form {
+    flex-direction: column !important;
+  }
+
+  /* Bracket: slightly smaller cards */
+  .bracket-wrap {
+    gap: 4px !important;
+  }
+  .bracket-round-col {
+    min-width: 160px !important;
+    flex: 0 0 160px !important;
+  }
+}
