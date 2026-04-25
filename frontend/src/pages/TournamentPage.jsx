@@ -5,11 +5,13 @@ import {
   addTeam, generateSchedule, enterResult, getBracket,
 } from "../api/tournaments";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export default function TournamentPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [tournament, setTournament] = useState(null);
   const [tab, setTab] = useState("schedule");
@@ -98,12 +100,12 @@ export default function TournamentPage() {
         <div style={s.headerInner}>
           <button style={s.backBtn} onClick={() => navigate("/")}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-            All Tournaments
+            {t("tournament.back")}
           </button>
 
           <div style={s.headerMeta}>
             <span style={s.sportChip}>{tournament.sport}</span>
-            <span style={s.formatChip}>{tournament.format === "single-elimination" ? "Bracket" : "League"}</span>
+            <span style={s.formatChip}>{tournament.format === "single-elimination" ? t("tournament.formatBracket") : t("tournament.formatLeague")}</span>
           </div>
           <h1 style={s.title}>{tournament.name}</h1>
 
@@ -113,16 +115,16 @@ export default function TournamentPage() {
               <div style={s.progressBar}>
                 <div style={{ ...s.progressFill, width: `${progress}%` }} />
               </div>
-              <span style={s.progressLabel}>{completedCount}/{schedule.length} matches</span>
+              <span style={s.progressLabel}>{completedCount}/{schedule.length} {t("tournament.matches")}</span>
             </div>
           )}
 
           {/* Stats row */}
           <div style={s.statsRow}>
-            <MiniStat icon={teamsIcon} value={teams.length} label="Teams" />
-            <MiniStat icon={matchIcon} value={schedule.length} label="Matches" />
-            <MiniStat icon={checkIcon} value={completedCount} label="Played" />
-            <MiniStat icon={personIcon} value={tournament.created_by_username} label="Organizer" />
+            <MiniStat icon={teamsIcon} value={teams.length} label={t("tournament.statsTeams")} />
+            <MiniStat icon={matchIcon} value={schedule.length} label={t("tournament.statsMatches")} />
+            <MiniStat icon={checkIcon} value={completedCount} label={t("tournament.statsPlayed")} />
+            <MiniStat icon={personIcon} value={tournament.created_by_username} label={t("tournament.statsOrganizer")} />
           </div>
         </div>
       </div>
@@ -135,20 +137,20 @@ export default function TournamentPage() {
               <>
                 <form onSubmit={handleAddTeam} style={s.addForm}>
                   <div style={{ flex: 1 }}>
-                    <label className="label">Add Team</label>
-                    <input className="field" placeholder="Team name" value={newTeam}
+                    <label className="label">{t("tournament.addTeam")}</label>
+                    <input className="field" placeholder={t("tournament.teamPlaceholder")} value={newTeam}
                       onChange={(e) => setNewTeam(e.target.value)} required />
                   </div>
                   <button type="submit" className="btn-ghost" style={s.addBtn}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>
-                    Add
+                    {t("tournament.addBtn")}
                   </button>
                 </form>
                 {teamError && <p className="err" style={{ marginTop: 8 }}>{teamError}</p>}
                 {teams.length >= 2 && (
                   <button className="btn-gold" style={s.genBtn} onClick={handleGenerateSchedule} disabled={genLoading}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    {genLoading ? "Generating…" : `Generate Schedule (${teams.length} teams)`}
+                    {genLoading ? t("tournament.generating") : t("tournament.generateBtn", { count: teams.length })}
                   </button>
                 )}
               </>
@@ -156,8 +158,8 @@ export default function TournamentPage() {
               <div style={s.orgNote}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#F0A500" strokeWidth="2" strokeLinecap="round" /></svg>
                 {tournament.format === "single-elimination"
-                  ? "Bracket is live — enter results to advance teams"
-                  : "Schedule is live — enter results in the Schedule tab"}
+                  ? t("tournament.orgBracket")
+                  : t("tournament.orgLeague")}
               </div>
             )}
           </div>
@@ -169,22 +171,22 @@ export default function TournamentPage() {
         <div style={s.tabsInner}>
           {(tournament.format === "single-elimination"
             ? [
-                { key: "schedule", label: "Schedule", count: schedule.length },
-                { key: "bracket", label: "Bracket", count: bracket.length },
-                { key: "teams", label: "Teams", count: teams.length },
+                { key: "schedule", labelKey: "tournament.tabs.schedule", count: schedule.length },
+                { key: "bracket", labelKey: "tournament.tabs.bracket", count: bracket.length },
+                { key: "teams", labelKey: "tournament.tabs.teams", count: teams.length },
               ]
             : [
-                { key: "schedule", label: "Schedule", count: schedule.length },
-                { key: "standings", label: "Standings", count: standings.length },
-                { key: "teams", label: "Teams", count: teams.length },
+                { key: "schedule", labelKey: "tournament.tabs.schedule", count: schedule.length },
+                { key: "standings", labelKey: "tournament.tabs.standings", count: standings.length },
+                { key: "teams", labelKey: "tournament.tabs.teams", count: teams.length },
               ]
-          ).map(({ key, label, count }) => (
+          ).map(({ key, count, labelKey }) => (
             <button
               key={key}
               style={{ ...s.tabBtn, ...(tab === key ? s.tabActive : {}) }}
               onClick={() => setTab(key)}
             >
-              {label}
+              {t(labelKey)}
               <span style={{ ...s.tabCount, ...(tab === key ? s.tabCountActive : {}) }}>
                 {count}
               </span>
@@ -209,10 +211,10 @@ export default function TournamentPage() {
       {resultModal && (
         <div style={s.overlay} onClick={() => setResultModal(null)}>
           <div style={s.modal} onClick={(e) => e.stopPropagation()}>
-            <div style={s.modalTag}>Enter Result</div>
+            <div style={s.modalTag}>{t("tournament.modal.title")}</div>
             <div style={s.modalMatchup}>
               <div style={s.modalTeam}>{resultModal.home_team_name}</div>
-              <span style={s.modalVs}>vs</span>
+              <span style={s.modalVs}>{t("tournament.modal.vs")}</span>
               <div style={s.modalTeam}>{resultModal.away_team_name}</div>
             </div>
             <div style={s.scoreRow}>
@@ -240,10 +242,10 @@ export default function TournamentPage() {
               </div>
             </div>
             <div style={s.modalBtns}>
-              <button style={s.cancelBtn} onClick={() => setResultModal(null)}>Cancel</button>
+              <button style={s.cancelBtn} onClick={() => setResultModal(null)}>{t("tournament.modal.cancel")}</button>
               <button className="btn-primary" style={{ flex: 2, padding: "12px" }} onClick={handleEnterResult}
                 disabled={scores.home === "" || scores.away === ""}>
-                Save Result
+                {t("tournament.modal.save")}
               </button>
             </div>
           </div>
@@ -255,13 +257,14 @@ export default function TournamentPage() {
 
 /* ── Schedule Tab ─────────────────────────── */
 function ScheduleTab({ schedule, isOrganizer, onEnterResult }) {
+  const { t } = useTranslation();
   if (schedule.length === 0) return (
     <div style={s.empty}>
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.2 }}>
         <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
         <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
-      <p style={s.emptyText}>No schedule yet — add teams and generate</p>
+      <p style={s.emptyText}>{t("tournament.schedule.empty")}</p>
     </div>
   );
 
@@ -277,7 +280,7 @@ function ScheduleTab({ schedule, isOrganizer, onEnterResult }) {
       {Object.entries(byRound).map(([round, matches]) => (
         <div key={round}>
           <div style={s.roundHeader}>
-            <span style={s.roundLabel}>Round {round}</span>
+            <span style={s.roundLabel}>{t("tournament.schedule.round", { n: round })}</span>
             <span style={s.roundLine} />
             <span style={s.roundCount}>{matches.filter(m => m.status === "completed").length}/{matches.length}</span>
           </div>
@@ -318,21 +321,27 @@ function MatchRow({ match: m, isOrganizer, onEnterResult }) {
       </div>
       {isOrganizer && !done && (
         <button style={s.resultBtn} onClick={() => onEnterResult(m)}>
-          Enter Result
+          <EnterResultLabel />
         </button>
       )}
     </div>
   );
 }
 
+function EnterResultLabel() {
+  const { t } = useTranslation();
+  return <>{t("tournament.schedule.enterResult")}</>;
+}
+
 /* ── Bracket Tab ──────────────────────────── */
 function BracketTab({ bracket, isOrganizer, onEnterResult }) {
+  const { t } = useTranslation();
   if (bracket.length === 0) return (
     <div style={s.empty}>
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.2 }}>
         <path d="M3 6h4v4H3zM3 14h4v4H3zM17 10h4v4h-4zM7 8h6M7 16h6M13 8v8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      <p style={s.emptyText}>No bracket yet — add teams and generate</p>
+      <p style={s.emptyText}>{t("tournament.bracket.empty")}</p>
     </div>
   );
 
@@ -340,7 +349,7 @@ function BracketTab({ bracket, isOrganizer, onEnterResult }) {
     <div style={bs.wrap}>
       {bracket.map((round, ri) => (
         <div key={round.round} style={bs.roundCol}>
-          <div style={bs.roundName}>{round.name}</div>
+          <div style={bs.roundName}>{t(`tournament.rounds.${round.name}`, round.name)}</div>
           <div style={bs.matchList}>
             {round.matches.map((m) => {
               const done = m.status === "completed";
@@ -360,7 +369,7 @@ function BracketTab({ bracket, isOrganizer, onEnterResult }) {
                   </div>
                   {isOrganizer && !done && !isTBD && m.home_team && m.away_team && (
                     <button style={bs.resultBtn} onClick={() => onEnterResult(m)}>
-                      Result
+                      {t("tournament.bracket.result")}
                     </button>
                   )}
                 </div>
@@ -434,12 +443,13 @@ const bs = {
 
 /* ── Standings Tab ────────────────────────── */
 function StandingsTab({ standings }) {
+  const { t } = useTranslation();
   if (standings.length === 0) return (
     <div style={s.empty}>
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.2 }}>
         <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
-      <p style={s.emptyText}>No standings yet — enter match results</p>
+      <p style={s.emptyText}>{t("tournament.standings.empty")}</p>
     </div>
   );
 
@@ -501,24 +511,25 @@ function StandingsTab({ standings }) {
 
 /* ── Teams Tab ────────────────────────────── */
 function TeamsTab({ teams }) {
+  const { t } = useTranslation();
   if (teams.length === 0) return (
     <div style={s.empty}>
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.2 }}>
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="1.5" /><circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
-      <p style={s.emptyText}>No teams yet — add them above</p>
+      <p style={s.emptyText}>{t("tournament.teams.empty")}</p>
     </div>
   );
 
   return (
     <div style={s.teamsGrid}>
-      {teams.map((t, i) => (
-        <div key={t.id} style={s.teamCard}>
+      {teams.map((team, i) => (
+        <div key={team.id} style={s.teamCard}>
           <div style={s.teamNumber}>{String(i + 1).padStart(2, "0")}</div>
-          <div style={s.teamName}>{t.name}</div>
+          <div style={s.teamName}>{team.name}</div>
           <div style={s.teamPlayers}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" /><path d="M4 20C4 17 7.6 14 12 14C16.4 14 20 17 20 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-            {t.players?.length || 0} players
+            {team.players?.length || 0} {t("tournament.teams.players")}
           </div>
         </div>
       ))}

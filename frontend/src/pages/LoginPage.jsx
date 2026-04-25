@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export default function LoginPage() {
   const { login, register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ username: "", password: "", email: "" });
   const [error, setError] = useState("");
@@ -26,7 +28,7 @@ export default function LoginPage() {
       if (typeof data === "object") {
         setError(Object.values(data).flat().join(" "));
       } else {
-        setError("Authentication failed");
+        setError(t("login.errorDefault"));
       }
     } finally {
       setLoading(false);
@@ -50,12 +52,10 @@ export default function LoginPage() {
         </div>
 
         <h1 style={s.title}>
-          {mode === "login" ? "Welcome back" : "Create account"}
+          {mode === "login" ? t("login.welcome") : t("login.createAccount")}
         </h1>
         <p style={s.sub}>
-          {mode === "login"
-            ? "Sign in to manage your tournaments"
-            : "Start running tournaments in minutes"}
+          {mode === "login" ? t("login.signInSub") : t("login.registerSub")}
         </p>
 
         {/* Tabs */}
@@ -65,34 +65,34 @@ export default function LoginPage() {
             onClick={() => { setMode("login"); setError(""); }}
             type="button"
           >
-            Sign In
+            {t("login.signInTab")}
           </button>
           <button
             style={{ ...s.tab, ...(mode === "register" ? s.tabActive : {}) }}
             onClick={() => { setMode("register"); setError(""); }}
             type="button"
           >
-            Register
+            {t("login.registerTab")}
           </button>
         </div>
 
         <form onSubmit={handle} style={s.form}>
           <div>
-            <label className="label">Username</label>
-            <input className="field" placeholder="your_username" autoComplete="username"
+            <label className="label">{t("login.usernameLabel")}</label>
+            <input className="field" placeholder={t("login.usernamePlaceholder")} autoComplete="username"
               value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} required />
           </div>
 
           {mode === "register" && (
             <div>
-              <label className="label">Email <span style={{ color: "var(--text-dim)", fontWeight: 400, fontSize: 10 }}>(optional)</span></label>
+              <label className="label">{t("login.emailLabel")} <span style={{ color: "var(--text-dim)", fontWeight: 400, fontSize: 10 }}>{t("login.optional")}</span></label>
               <input className="field" type="email" placeholder="you@example.com" autoComplete="email"
                 value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
           )}
 
           <div>
-            <label className="label">Password</label>
+            <label className="label">{t("login.passwordLabel")}</label>
             <input className="field" type="password" placeholder="••••••••" autoComplete={mode === "login" ? "current-password" : "new-password"}
               value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
           </div>
@@ -105,13 +105,13 @@ export default function LoginPage() {
           )}
 
           <button type="submit" className="btn-primary" style={s.submit} disabled={loading}>
-            {loading ? "…" : mode === "login" ? "Sign In →" : "Create Account →"}
+            {loading ? t("login.loading") : mode === "login" ? t("login.signInBtn") : t("login.createBtn")}
           </button>
         </form>
 
         <Link to="/" style={s.back}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-          Back to tournaments
+          {t("login.back")}
         </Link>
       </div>
     </main>

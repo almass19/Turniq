@@ -1,9 +1,17 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const { t, i18n } = useTranslation();
+
+  const toggleLang = () => {
+    const next = i18n.language === "ru" ? "en" : "ru";
+    i18n.changeLanguage(next);
+    localStorage.setItem("lang", next);
+  };
 
   return (
     <header style={s.wrap}>
@@ -20,11 +28,15 @@ export default function Navbar() {
 
         <nav style={s.nav}>
           <Link to="/" style={{ ...s.navLink, ...(location.pathname === "/" ? s.navActive : {}) }}>
-            Tournaments
+            {t("nav.tournaments")}
           </Link>
         </nav>
 
         <div style={s.right}>
+          <button style={s.langBtn} onClick={toggleLang}>
+            {i18n.language === "ru" ? "EN" : "RU"}
+          </button>
+
           {user ? (
             <>
               <span style={s.username}>
@@ -35,12 +47,12 @@ export default function Navbar() {
                 {user.username}
               </span>
               <button className="btn-ghost" onClick={logout} style={{ padding: "7px 14px", fontSize: 12 }}>
-                Logout
+                {t("nav.logout")}
               </button>
             </>
           ) : (
             <Link to="/login" className="btn-primary" style={{ padding: "8px 18px", fontSize: 13 }}>
-              Sign In
+              {t("nav.signIn")}
             </Link>
           )}
         </div>
@@ -86,6 +98,17 @@ const s = {
   },
   navActive: { color: "#F0EEF5", background: "rgba(255,255,255,0.06)" },
   right: { display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" },
+  langBtn: {
+    background: "transparent",
+    border: "1px solid rgba(255,255,255,0.12)",
+    borderRadius: 6,
+    padding: "4px 10px",
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontWeight: 700, fontSize: 12, letterSpacing: "0.1em",
+    color: "#8B8A9B",
+    cursor: "pointer",
+    transition: "color 180ms, border-color 180ms",
+  },
   username: {
     display: "flex", alignItems: "center", gap: 6,
     fontFamily: "'Barlow Condensed', sans-serif",

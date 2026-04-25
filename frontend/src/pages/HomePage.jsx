@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getTournaments, createTournament } from "../api/tournaments";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [tournaments, setTournaments] = useState([]);
   const [form, setForm] = useState({ name: "", sport: "", format: "round-robin" });
   const [error, setError] = useState("");
@@ -25,7 +27,7 @@ export default function HomePage() {
       const { data } = await createTournament(form);
       navigate(`/tournaments/${data.id}`);
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to create tournament");
+      setError(err.response?.data?.detail || t("home.modal.errorDefault"));
     } finally {
       setLoading(false);
     }
@@ -39,37 +41,37 @@ export default function HomePage() {
         <div style={s.heroInner}>
           <div style={s.heroTag}>
             <span style={s.heroDot} />
-            Round-Robin Engine
+            {t("home.badge")}
           </div>
           <h1 style={s.heroTitle}>
-            Run Your<br />
-            <span style={s.heroAccent}>Tournament</span>
+            {t("home.heroTitle")}<br />
+            <span style={s.heroAccent}>{t("home.heroAccent")}</span>
           </h1>
           <p style={s.heroSub}>
-            Create brackets, add teams, auto-generate schedules and track live standings.
+            {t("home.heroSub")}
           </p>
           <div style={s.heroCtas}>
             {user ? (
               <button className="btn-primary" style={s.heroBtn} onClick={() => setShowForm(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>
-                New Tournament
+                {t("home.newTournament")}
               </button>
             ) : (
               <Link to="/login" className="btn-primary" style={s.heroBtn}>
-                Get Started
+                {t("home.getStarted")}
               </Link>
             )}
             <a href="#tournaments" className="btn-ghost" style={{ padding: "11px 22px" }}>
-              Browse All
+              {t("home.browseAll")}
             </a>
           </div>
         </div>
         <div style={s.heroStats}>
-          <Stat value={tournaments.length} label="Tournaments" />
+          <Stat value={tournaments.length} label={t("home.statsTournaments")} />
           <div style={s.statDiv} />
-          <Stat value={tournaments.reduce((a, t) => a + (t.teams_count || 0), 0)} label="Teams" />
+          <Stat value={tournaments.reduce((a, t) => a + (t.teams_count || 0), 0)} label={t("home.statsTeams")} />
           <div style={s.statDiv} />
-          <Stat value="RR" label="Format" />
+          <Stat value="RR" label={t("home.statsFormat")} />
         </div>
       </section>
 
@@ -79,7 +81,7 @@ export default function HomePage() {
           <div style={s.modal} onClick={(e) => e.stopPropagation()}>
             <div style={s.modalHead}>
               <h3 style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 22, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                New Tournament
+                {t("home.modal.title")}
               </h3>
               <button style={s.closeBtn} onClick={() => setShowForm(false)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -87,21 +89,21 @@ export default function HomePage() {
             </div>
             <form onSubmit={handleCreate} style={s.form}>
               <div>
-                <label className="label">Tournament Name</label>
-                <input className="field" placeholder="e.g. Champions League 2026" value={form.name}
+                <label className="label">{t("home.modal.nameLabel")}</label>
+                <input className="field" placeholder={t("home.modal.namePlaceholder")} value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })} required />
               </div>
               <div>
-                <label className="label">Sport</label>
-                <input className="field" placeholder="e.g. Football, Basketball, Volleyball" value={form.sport}
+                <label className="label">{t("home.modal.sportLabel")}</label>
+                <input className="field" placeholder={t("home.modal.sportPlaceholder")} value={form.sport}
                   onChange={(e) => setForm({ ...form, sport: e.target.value })} required />
               </div>
               <div>
-                <label className="label">Format</label>
+                <label className="label">{t("home.modal.formatLabel")}</label>
                 <div style={s.formatToggle}>
                   {[
-                    { value: "round-robin", label: "League", sub: "Everyone plays everyone" },
-                    { value: "single-elimination", label: "Bracket", sub: "Win or go home" },
+                    { value: "round-robin", label: t("home.modal.leagueLabel"), sub: t("home.modal.leagueSub") },
+                    { value: "single-elimination", label: t("home.modal.bracketLabel"), sub: t("home.modal.bracketSub") },
                   ].map((f) => (
                     <button
                       key={f.value}
@@ -117,7 +119,7 @@ export default function HomePage() {
               </div>
               {error && <p className="err">{error}</p>}
               <button type="submit" className="btn-primary" style={{ width: "100%", marginTop: 4 }} disabled={loading}>
-                {loading ? "Creating…" : "Create & Setup Teams →"}
+                {loading ? t("home.modal.creating") : t("home.modal.createBtn")}
               </button>
             </form>
           </div>
@@ -127,11 +129,11 @@ export default function HomePage() {
       {/* ── Tournament list ── */}
       <section id="tournaments" style={s.section}>
         <div style={s.sectionHead}>
-          <h2 style={s.sectionTitle}>Tournaments</h2>
+          <h2 style={s.sectionTitle}>{t("home.listTitle")}</h2>
           {user && (
             <button className="btn-primary" style={{ padding: "9px 18px", fontSize: 13 }} onClick={() => setShowForm(true)}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>
-              New
+              {t("home.newBtn")}
             </button>
           )}
         </div>
@@ -143,7 +145,7 @@ export default function HomePage() {
               <path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             <p style={{ color: "var(--text-dim)", marginTop: 12, fontFamily: "'Barlow Condensed',sans-serif", letterSpacing: "0.06em", textTransform: "uppercase", fontSize: 14 }}>
-              No tournaments yet
+              {t("home.empty")}
             </p>
           </div>
         ) : (
@@ -171,25 +173,26 @@ function Stat({ value, label }) {
   );
 }
 
-function TournamentCard({ tournament: t }) {
+function TournamentCard({ tournament: tr }) {
+  const { t } = useTranslation();
   return (
-    <Link to={`/tournaments/${t.id}`} style={s.tCard}
+    <Link to={`/tournaments/${tr.id}`} style={s.tCard}
       onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(229,21,46,0.35)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.transform = "translateY(0)"; }}
     >
       <div style={s.tCardTop}>
-        <span style={s.sportTag}>{t.sport}</span>
-        <span style={s.formatTag}>{t.format === "single-elimination" ? "Bracket" : "League"}</span>
+        <span style={s.sportTag}>{tr.sport}</span>
+        <span style={s.formatTag}>{tr.format === "single-elimination" ? t("home.cardBracket") : t("home.cardLeague")}</span>
       </div>
-      <div style={s.tName}>{t.name}</div>
+      <div style={s.tName}>{tr.name}</div>
       <div style={s.tMeta}>
         <span style={s.tMetaItem}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" /><path d="M4 20C4 17 7.6 14 12 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-          {t.created_by_username}
+          {tr.created_by_username}
         </span>
         <span style={s.tMetaItem}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" /><circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-          {t.teams_count} teams
+          {tr.teams_count} {t("home.cardTeams")}
         </span>
       </div>
       <div style={s.tCardArrow}>
